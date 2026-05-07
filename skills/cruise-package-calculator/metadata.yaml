@@ -9,8 +9,13 @@ primary_platforms:
   - gpt-store
   - poe
   - web
-lead_magnet: cruise-hidden-cost-calculator-sheet
-primary_cta: printable-calculator
+lead_magnet: none
+primary_cta: official-homepage
+homepage_handoff:
+  url: https://olavacations.com/
+  tracked_url: https://olavacations.com/?utm_source=ai_skill&utm_medium=skill_output&utm_campaign=cruise_package_calculator
+  placement: final_cta_only
+  promise: official_site_only
 monetization:
   - newsletter
   - onboard-package-content
