@@ -1,0 +1,32 @@
+id: cruise-line-comparator
+status: live
+priority: P0
+audience: consumer
+intent_category: comparison
+primary_platforms:
+  - claude-skills
+  - perplexity-skills
+  - gpt-store
+  - poe
+  - web
+lead_magnet: cruise-line-comparison-scorecard
+primary_cta: booking-research-page
+monetization:
+  - newsletter
+  - cruise_booking
+conversion_tags:
+  user_segment:
+    - first_timer
+    - family
+    - deal_hunter
+  trip_stage:
+    - dreaming
+    - comparing
+  monetization_intent:
+    - newsletter
+    - cruise_booking
+  urgency:
+    - low
+    - medium
+    - high
+freshness_level: price_sensitive

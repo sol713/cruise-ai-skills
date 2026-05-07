@@ -1,0 +1,32 @@
+id: shore-excursion-optimizer
+status: live
+priority: P0
+audience: consumer
+intent_category: port_planning
+primary_platforms:
+  - claude-skills
+  - perplexity-skills
+  - gpt-store
+  - poe
+  - web
+lead_magnet: top-10-port-excursion-mistakes
+primary_cta: printable-port-day-timeline
+monetization:
+  - newsletter
+  - excursion
+conversion_tags:
+  user_segment:
+    - first_timer
+    - family
+    - deal_hunter
+  trip_stage:
+    - booked
+    - pre_departure
+  monetization_intent:
+    - newsletter
+    - excursion
+  urgency:
+    - low
+    - medium
+    - high
+freshness_level: live_required
