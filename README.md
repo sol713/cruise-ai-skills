@@ -89,6 +89,10 @@ The tests cover CLI errors, numeric boundaries, existing drink calculations,
 scoring thresholds, and unsupported-package behavior. The example output is
 checked against [drink-package.output.json](skills/cruise-package-calculator/examples/drink-package.output.json).
 
+The [Calculator tests workflow](.github/workflows/calculator-tests.yml) runs these
+tests, compiles the Python sources, and checks the documented CLI example on
+relevant pull requests and pushes to `main`, using Python 3.12.
+
 ## Example Prompts
 
 ```text

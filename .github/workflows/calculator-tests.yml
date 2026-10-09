@@ -1,0 +1,60 @@
+name: Calculator tests
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/calculator-tests.yml
+      - skills/cruise-package-calculator/**
+      - tests/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/calculator-tests.yml
+      - skills/cruise-package-calculator/**
+      - tests/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calculator-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Drink calculator (Python 3.12)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out the triggering commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Compile Python sources
+        run: python -m compileall -q skills tests
+      - name: Verify the documented CLI example
+        run: |
+          python skills/cruise-package-calculator/scripts/calculator.py \
+            < skills/cruise-package-calculator/examples/drink-package.input.json \
+            > "$RUNNER_TEMP/drink-package.actual.json"
+          python - "$RUNNER_TEMP/drink-package.actual.json" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          actual = json.loads(Path(sys.argv[1]).read_text())
+          expected = json.loads(Path("skills/cruise-package-calculator/examples/drink-package.output.json").read_text())
+          if actual != expected:
+              raise SystemExit("Documented CLI example differs from the expected output")
+          print("Documented CLI example matches the expected output")
+          PY
