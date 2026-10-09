@@ -10,6 +10,11 @@ Open-source AI skills for cruise travelers, cruise bloggers, travel advisors, an
 | `cruise-line-comparator` | Live | Carnival vs Royal Caribbean, Princess vs Celebrity, NCL vs MSC, family cruises, solo cruises, Alaska, Caribbean, and Mediterranean comparisons |
 | `shore-excursion-optimizer` | Live | Ship-sponsored excursions vs independent tours vs self-guided port days, with return-to-ship risk scoring |
 
+The package skill provides guidance and formulas for all listed package types.
+Its Python helper currently calculates **drink packages only**; other types return
+an explicit unimplemented note. See the [calculator CLI contract and examples](skills/cruise-package-calculator/examples/calculator-cli.md)
+for its input defaults, adult-only model, static pricing assumptions, and exact outputs.
+
 ## Why This Repo Exists
 
 Cruise planning is full of high-intent decisions where travelers need a clear answer, not vague inspiration:
@@ -69,6 +74,24 @@ Open the relevant `SYSTEM_PROMPT.md` file and use the platform-specific variant:
 - Poe: Variant C
 - Gemini Gem: Variant D
 - Claude Project: Variant E
+
+### Run the Python helper and tests
+
+Python 3.10+ is sufficient; no dependencies, API keys, or network access are needed.
+From the repository root:
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 skills/cruise-package-calculator/scripts/calculator.py < skills/cruise-package-calculator/examples/drink-package.input.json
+```
+
+The tests cover CLI errors, numeric boundaries, existing drink calculations,
+scoring thresholds, and unsupported-package behavior. The example output is
+checked against [drink-package.output.json](skills/cruise-package-calculator/examples/drink-package.output.json).
+
+The [Calculator tests workflow](.github/workflows/calculator-tests.yml) runs these
+tests, compiles the Python sources, and checks the documented CLI example on
+relevant pull requests and pushes to `main`, using Python 3.12.
 
 ## Example Prompts
 

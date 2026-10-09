@@ -101,6 +101,14 @@ For multi-package or family-of-4+ scenarios where mental math gets unreliable, i
 
 - `scripts/calculator.py` — accepts JSON input with `cruise_line`, `nights`, `adults`, `kids`, `packages`, and `consumption_per_adult_per_day`, then returns structured break-even output. Use only when the question involves 3+ packages or 4+ people; otherwise inline math is faster.
 
+The helper implements drink-package arithmetic only; Wi-Fi, dining, photo, and
+bundle entries return an unimplemented note and need inline math. Its household
+totals include adults only, its break-even is in $14 cocktail equivalents, and
+its reported drink count includes alcoholic drinks only. It does not optimize
+multi-package combinations or apply current package policies. Read
+`examples/calculator-cli.md` for validated inputs, scoring defaults, limitations,
+and runnable JSON input/output before interpreting helper results.
+
 Minimal input shape:
 
 ```json

@@ -35,8 +35,11 @@ JSON input schema:
 }
 
 Output: structured JSON with break-even, value score, à-la-carte cost, verdict.
+Only drink packages are calculated; other types return an unimplemented note.
+See ../examples/calculator-cli.md for defaults, validation, and output meanings.
 """
 import json
+import math
 import sys
 from typing import Any
 
@@ -64,6 +67,48 @@ GRATUITY = {
 }
 
 
+def _finite_number(value: Any, field: str, minimum: float | None = None,
+                   maximum: float | None = None) -> None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field} must be a finite number")
+    try:
+        finite = math.isfinite(value)
+    except OverflowError:
+        finite = False
+    if not finite:
+        raise ValueError(f"{field} must be a finite number")
+    if minimum is not None and value < minimum:
+        raise ValueError(f"{field} must be >= {minimum}")
+    if maximum is not None and value > maximum:
+        raise ValueError(f"{field} must be <= {maximum}")
+
+
+def _validate_drink_inputs(pkg: dict[str, Any], req: dict[str, Any]) -> None:
+    if not isinstance(req, dict) or not isinstance(pkg, dict):
+        raise ValueError("request and package must be JSON objects")
+    if not isinstance(req.get("cruise_line"), str):
+        raise ValueError("cruise_line is required and must be a string")
+    for field, default, minimum in (("nights", None, 1), ("adults", 1, 0), ("kids", 0, 0)):
+        value = req.get(field, default)
+        if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
+            raise ValueError(f"{field} must be an integer >= {minimum}")
+    _finite_number(pkg.get("daily_price"), "package.daily_price", minimum=0)
+    if not isinstance(pkg.get("gratuity_already_included", False), bool):
+        raise ValueError("package.gratuity_already_included must be a boolean")
+    consumption = req.get("consumption_per_adult_per_day", {})
+    if not isinstance(consumption, dict):
+        raise ValueError("consumption_per_adult_per_day must be a JSON object")
+    for drink in UNIT_PRICES:
+        _finite_number(consumption.get(drink, 0), f"consumption_per_adult_per_day.{drink}", minimum=0)
+    for field in ("convenience_score", "risk_score"):
+        _finite_number(req.get(field, 60), field, minimum=0, maximum=100)
+    _finite_number(req.get("pre_cruise_discount_pct", 15), "pre_cruise_discount_pct")
+
+
+def _reject_json_constant(value: str) -> None:
+    raise ValueError(f"Invalid JSON: {value} is not a valid JSON number")
+
+
 def effective_daily_cost(daily_price: float, line: str, already_included: bool) -> float:
     if already_included:
         return daily_price
@@ -71,7 +116,7 @@ def effective_daily_cost(daily_price: float, line: str, already_included: bool) 
     return daily_price * (1 + rate)
 
 
-def alacarte_daily_cost(consumption: dict[str, int]) -> float:
+def alacarte_daily_cost(consumption: dict[str, int | float]) -> float:
     return sum(consumption.get(k, 0) * UNIT_PRICES[k] for k in UNIT_PRICES)
 
 
@@ -103,6 +148,7 @@ def verdict_from_score(score: float) -> str:
 
 
 def analyze_drink_package(pkg: dict[str, Any], req: dict[str, Any]) -> dict[str, Any]:
+    _validate_drink_inputs(pkg, req)
     line = req["cruise_line"]
     nights = req["nights"]
     adults = req.get("adults", 1)
@@ -123,7 +169,7 @@ def analyze_drink_package(pkg: dict[str, Any], req: dict[str, Any]) -> dict[str,
     breakeven_drinks = edc / 14.00  # at avg cocktail price
     actual_drinks = sum(consumption.get(k, 0) for k in ["cocktails", "beers", "wine_glasses"])
 
-    return {
+    result = {
         "package_name": pkg.get("name", "drink package"),
         "package_total_for_household": round(package_total, 2),
         "alacarte_total_for_household": round(acc_total, 2),
@@ -134,6 +180,10 @@ def analyze_drink_package(pkg: dict[str, Any], req: dict[str, Any]) -> dict[str,
         "value_score": score,
         "verdict": verdict_from_score(score),
     }
+    for field, value in result.items():
+        if isinstance(value, (int, float)):
+            _finite_number(value, f"calculated {field}")
+    return result
 
 
 def main() -> None:
@@ -142,23 +192,41 @@ def main() -> None:
         print(json.dumps({"error": "No JSON provided on stdin"}))
         sys.exit(1)
     try:
-        req = json.loads(raw)
+        req = json.loads(raw, parse_constant=_reject_json_constant)
     except json.JSONDecodeError as e:
         print(json.dumps({"error": f"Invalid JSON: {e}"}))
         sys.exit(1)
+    except ValueError as e:
+        print(json.dumps({"error": str(e)}))
+        sys.exit(1)
 
-    results = []
-    for pkg in req.get("packages", []):
-        if pkg.get("type") == "drink":
-            results.append(analyze_drink_package(pkg, req))
-        else:
-            results.append({
-                "package_name": pkg.get("name"),
-                "type": pkg.get("type"),
-                "note": "Non-drink package handler not implemented in this minimal script. Use inline math via SKILL.md formulas.",
-            })
+    try:
+        if not isinstance(req, dict):
+            raise ValueError("request must be a JSON object")
+        packages = req.get("packages", [])
+        if not isinstance(packages, list):
+            raise ValueError("packages must be a JSON array")
+        results = []
+        for index, pkg in enumerate(packages):
+            if not isinstance(pkg, dict):
+                raise ValueError(f"packages[{index}] must be a JSON object")
+            if pkg.get("type") == "drink":
+                try:
+                    results.append(analyze_drink_package(pkg, req))
+                except (ValueError, OverflowError) as e:
+                    raise ValueError(f"packages[{index}]: {e}") from e
+            else:
+                results.append({
+                    "package_name": pkg.get("name"),
+                    "type": pkg.get("type"),
+                    "note": "Non-drink package handler not implemented in this minimal script. Use inline math via SKILL.md formulas.",
+                })
+        output = json.dumps({"results": results}, indent=2, allow_nan=False)
+    except (ValueError, OverflowError) as e:
+        print(json.dumps({"error": str(e)}))
+        sys.exit(1)
 
-    print(json.dumps({"results": results}, indent=2))
+    print(output)
 
 
 if __name__ == "__main__":
