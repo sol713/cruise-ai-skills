@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "package_name": "Deluxe Beverage Package",
+      "package_total_for_household": 1470.28,
+      "alacarte_total_for_household": 966.0,
+      "net_position": 504.28,
+      "savings_pct": -52.2,
+      "breakeven_drinks_per_day": 7.5,
+      "user_drinks_per_day": 4,
+      "value_score": 33.0,
+      "verdict": "SKIP (lean)"
+    }
+  ]
+}

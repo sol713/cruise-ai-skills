@@ -1,0 +1,23 @@
+{
+  "cruise_line": "Royal Caribbean",
+  "nights": 7,
+  "adults": 2,
+  "kids": 0,
+  "packages": [
+    {
+      "type": "drink",
+      "name": "Deluxe Beverage Package",
+      "daily_price": 89,
+      "purchased": "pre_cruise",
+      "gratuity_already_included": false
+    }
+  ],
+  "consumption_per_adult_per_day": {
+    "cocktails": 4,
+    "beers": 0,
+    "wine_glasses": 0,
+    "sodas": 2,
+    "premium_coffees": 1,
+    "bottled_waters": 0
+  }
+}
